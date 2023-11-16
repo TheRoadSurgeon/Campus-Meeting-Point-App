@@ -27,9 +27,9 @@ using namespace std;
 template<typename VertexT, typename WeightT>
 class graph {
  private:
-  map<VertexT, map<VertexT, WeightT>> adjList;
+  unordered_map<VertexT, map<VertexT, WeightT>> adjList;
   bool _LookupVertex(VertexT v) const{
-    if(this->adjList.find(v) == this->adjList.end()){
+    if(adjList.find(v) == adjList.end()){
       return false;
     }
     return true;
@@ -108,46 +108,39 @@ class graph {
     return true;
   }
 
-  //
-  // getWeight
-  //
-  // Returns the weight associated with a given edge.  If
-  // the edge exists, the weight is returned via the reference
-  // parameter and true is returned.  If the edge does not
-  // exist, the weight parameter is unchanged and false is
-  // returned.
-  //
+  /// @brief Returns the weight associated with a given edge.  If
+  ///        the edge exists, the weight is returned via the reference
+  ///        parameter and true is returned.  If the edge does not
+  ///        exist, the weight parameter is unchanged and false is
+  ///        returned.
+  /// @param from key vertex in the map.
+  /// @param to value vertex in the map. Stored as a key of the nested map.
+  /// @param weight value in the map. Stored as a value in the nested map.
+  /// @return true if vertex is in the map/false if not.
   bool getWeight(VertexT from, VertexT to, WeightT& weight) const {
-    //
-    // we need to search the Vertices and find the position
-    // of each vertex; this will denote the row and col to
-    // access in the adjacency matrix:
-    //
-    int row = _LookupVertex(from);
-
-    if (row < 0) {  // not found:
+    
+    if(!_LookupVertex(from) || !_LookupVertex(to)){
       return false;
     }
+    // Find the vertex in the graph
+    auto vertexKey = adjList.find(from);
 
-    int col = _LookupVertex(to);
-
-    if (col < 0) {  // not found:
+    // Store the nested map to a temp map (by reference).
+    // Allows access of the key/value pair in the nested map
+    const map<VertexT, WeightT>& tempMap = vertexKey->second;
+    
+    // Find the edge that is being looked for.
+    auto edgeKey = tempMap.find(to);
+    
+    // Check if there is an edge in the nested map.
+    if(edgeKey != tempMap.end()){
+      // Save the weight of the connection (vertex->edge).
+      weight = edgeKey->second;
+    }
+    else{
       return false;
     }
-
-    //
-    // the vertices exist, but does the edge exist?
-    //
-    if (!this->AdjMatrix[row][col].EdgeExists) {  // no:
-      return false;
-    }
-
-    //
-    // Okay, the edge exists, return the weight via the
-    // reference parameter:
-    //
-    weight = this->AdjMatrix[row][col].Weight;
-
+    
     return true;
   }
 
