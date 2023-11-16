@@ -1,18 +1,17 @@
-// graph.h <Starter Code>
-// < Your name >
-//
-// Basic graph class using adjacency matrix representation.  Currently
-// limited to a graph with at most 100 vertices.
-//
-//
-// Adam T Koehler, PhD
-// University of Illinois Chicago
-// CS 251, Fall 2023
-//
-// Project Original Variartion By:
-// Joe Hummel, PhD
-// University of Illinois at Chicago
-//
+///@file graph.h
+///@author Hristian Tountchev
+///@date 11/15/2023
+/// Adam T Koehler, PhD
+/// University of Illinois Chicago
+/// CS 251, Fall 2023
+///
+/// Project Original Variartion By:
+/// Joe Hummel, PhD
+/// University of Illinois at Chicago
+///
+///@brief graph.h will handle the organization of our data.
+///       It creats a graph out of a map of map.
+///       It will handle adding of vertices and the edges between them.
 
 #pragma once
 
@@ -20,69 +19,27 @@
 #include <stdexcept>
 #include <vector>
 #include <set>
+#include <map>
+#include <algorithm>
 
 using namespace std;
 
 template<typename VertexT, typename WeightT>
 class graph {
  private:
-  struct EdgeData {
-    bool     EdgeExists;
-    WeightT  Weight;
-
-    EdgeData() {
-      EdgeExists = false;  // initially no edge, and no weight
+  map<VertexT, map<VertexT, WeightT>> adjList;
+  bool _LookupVertex(VertexT v) const{
+    if(this->adjList.find(v) == this->adjList.end()){
+      return false;
     }
-  };
-
-  //
-  // We are using adjacency matrix implementation, where rows
-  // are the starting vertex and cols are the ending vertex.
-  // We keep track of the vertices in the Vertices vector,
-  // where the vertex's position in the vector --- 0, 1, 2,
-  // 3, 4, 5, ... --- denotes the row in the adjacency matrix
-  // where their edges are found.  Example: if vertex "ORD" is
-  // in position 1 of the Vertices vector, then row 1 of
-  // AdjMatrix are the edges that start at "ORD" and lead to
-  // other vertices.
-  //
-  static constexpr int MatrixSize = 100;
-
-  EdgeData         AdjMatrix[MatrixSize][MatrixSize];
-  vector<VertexT>  Vertices;
-
-  //
-  // _LookupVertex
-  //
-  // Finds the vertex in the Vertices vector and returns it's
-  // index position if found, otherwise returns -1.
-  //
-  int _LookupVertex(VertexT v) const {
-    for (int i = 0; i < this->NumVertices(); ++i) {
-      if (this->Vertices[i] == v)  // already in the graph:
-        return i;
-    }
-
-    // if get here, not found:
-    return -1;
+    return true;
   }
 
  public:
-  //
-  // constructor:
-  //
-  // Constructs an empty graph where n is the max # of vertices
-  // you expect the graph to contain.
-  //
-  // NOTE: the graph is implemented using an adjacency matrix.
-  // If n exceeds the dimensions of this matrix, an exception
-  // will be thrown to let you know that this implementation
-  // will not suffice.
-  //
-  graph(int n) {
-    if (n > MatrixSize) {
-      throw runtime_error("graph::constructor: n exceeds internal matrix size");
-    }
+
+  graph(){
+    
+
   }
 
   //
@@ -116,70 +73,37 @@ class graph {
     return count;
   }
 
-  //
-  // addVertex
-  //
-  // Adds the vertex v to the graph if there's room, and if so
-  // returns true.  If the graph is full, or the vertex already
-  // exists in the graph, then false is returned.
-  //
+  /// @brief This function adds all the vertecies to a map.
+  ///        It has a check if a vertex already exists and
+  ///        tell the user if the vertex was added or it already exists.
+  /// @param v takes in a new vertex to be added to the graph.
+  /// @return returns true if the vertex was added to the map.
   bool addVertex(VertexT v) {
-    if (this->NumVertices() > MatrixSize) {  // we're full:
+    
+    // Check if the vertex is in the map already.
+    if(_LookupVertex(v)){
       return false;
     }
-
-    //
-    // is the vertex already in the graph?  If so, we do not
-    // insert again otherwise Vertices may fill with duplicates:
-    //
-    if (_LookupVertex(v) >= 0) {
-      return false;
-    }
-
-    //
-    // if we get here, vertex does not exist so insert.  Where
-    // we insert becomes the rows and col position for this
-    // vertex in the adjacency matrix.
-    //
-    this->Vertices.push_back(v);
+    // If the key does not exist add it to map.
+    adjList[v];
 
     return true;
   }
 
-  //
-  // addEdge
-  //
-  // Adds the edge (from, to, weight) to the graph, and returns
-  // true.  If the vertices do not exist or for some reason the
-  // graph is full, false is returned.
-  //
-  // NOTE: if the edge already exists, the existing edge weight
-  // is overwritten with the new edge weight.
-  //
+  /// @brief This function adds edges to each vertex in the map.
+  ///        It handles error check to see if a vertex already exists.
+  ///        If the vertex does not exist in the map returns false.
+  /// @param from key vertex in the map.
+  /// @param to value vertex in the map. Stored as a key of the nested map.
+  /// @param weight value in the map. Stored as a value in the nested map.
+  /// @return true if vertex is in the map/false if not.
   bool addEdge(VertexT from, VertexT to, WeightT weight) {
-    //
-    // we need to search the Vertices and find the position
-    // of each vertex; this will denote the row and col to
-    // access in the adjacency matrix:
-    //
-    int row = _LookupVertex(from);
-
-    if (row < 0) {  // not found:
+    
+    if(!_LookupVertex(from) || !_LookupVertex(to)){
       return false;
     }
 
-    int col = _LookupVertex(to);
-
-    if (col < 0) {  // not found:
-      return false;
-    }
-
-    //
-    // the vertices exist and we have the row and col of the
-    // adjacency matrix, so insert / update the edge:
-    //
-    this->AdjMatrix[row][col].EdgeExists = true;
-    this->AdjMatrix[row][col].Weight = weight;
+    adjList[from][to] = weight;
 
     return true;
   }

@@ -132,7 +132,7 @@ void outputGraph(graph<string,int>& G)
 
 int main()
 {
-  graph<string,int> G(26);
+  graph<string,int> G;
   string filename;
   string startV;
 

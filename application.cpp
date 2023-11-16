@@ -46,7 +46,7 @@ using namespace tinyxml2;
 void application(
     map<long long, Coordinates>& Nodes, vector<FootwayInfo>& Footways,
     vector<BuildingInfo>& Buildings, graph<long long, double>& G) {
-  string person1Building, person2Building;
+    string person1Building, person2Building;
 
   cout << endl;
   cout << "Enter person 1's building (partial name or abbreviation), or #> ";
@@ -77,7 +77,7 @@ void application(
 }
 
 int main() {
-  graph<long long, double> G(100);
+  graph<long long, double> G;
 
   // maps a Node ID to it's coordinates (lat, lon)
   map<long long, Coordinates>  Nodes;
