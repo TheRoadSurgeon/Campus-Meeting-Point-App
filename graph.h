@@ -21,13 +21,15 @@
 #include <set>
 #include <map>
 #include <algorithm>
+#include "osm.h"
+
 
 using namespace std;
 
 template<typename VertexT, typename WeightT>
 class graph {
  private:
-  unordered_map<VertexT, map<VertexT, WeightT>> adjList;
+  map<VertexT, map<VertexT, WeightT>> adjList;
   bool _LookupVertex(VertexT v) const{
     if(adjList.find(v) == adjList.end()){
       return false;
@@ -37,18 +39,12 @@ class graph {
 
  public:
 
-  graph(){
-    
+  graph(){}
 
-  }
-
-  //
-  // NumVertices
-  //
-  // Returns the # of vertices currently in the graph.
-  //
+  /// @brief Shows the number of vertices in the graph
+  /// @return the number of vertices
   int NumVertices() const {
-    return static_cast<int>(this->Vertices.size());
+    return adjList.size();
   }
 
   //
@@ -58,17 +54,9 @@ class graph {
   //
   int NumEdges() const {
     int count = 0;
-
-    //
-    // loop through the adjacency matrix and count how many
-    // edges currently exist:
-    //
-    for (int row = 0; row < this->NumVertices(); ++row) {
-      for (int col = 0; col < this->NumVertices(); ++col) {
-        if (this->AdjMatrix[row][col].EdgeExists) {
-          count++;
-        }
-      }
+    
+    for(const auto& elem : adjList){
+      count+=elem.second.size();
     }
     return count;
   }
@@ -144,52 +132,48 @@ class graph {
     return true;
   }
 
-  //
-  // neighbors
-  //
-  // Returns a set containing the neighbors of v, i.e. all
-  // vertices that can be reached from v along one edge.
-  // Since a set is returned, the neighbors are returned in
-  // sorted order; use foreach to iterate through the set.
-  //
+  
+  /// @brief Returns a set containing the neighbors of v, i.e. all
+  ///        vertices that can be reached from v along one edge.
+  ///        Since a set is returned, the neighbors are returned in
+  ///        sorted order; use foreach to iterate through the set.
+  /// @param v Vertex we want to find the neighbors for.
+  /// @return A set that has all the neighbors of the v vertex.
   set<VertexT> neighbors(VertexT v) const {
     set<VertexT>  S;
 
-    //
-    // we need to search the Vertices and find the position
-    // of v, that will be the row we need in the adjacency
-    // matrix:
-    //
-    int row = _LookupVertex(v);
-
-    if (row < 0) {  // not found:
+    // Make sure the vertex exists in the adjList map.
+    if(!_LookupVertex(v)){
       return S;
     }
 
-    //
-    // we found the row, so loop along the row and for every
-    // edge that exists, add the column vertex to V:
-    //
-    // NOTE: how many columns are there?  The # of vertices.
-    //
-    for (int col = 0; col < this->NumVertices(); ++col) {
-      if (this->AdjMatrix[row][col].EdgeExists) {
-        VertexT dest = this->Vertices[col];  // dest vertex is here:
-        S.insert(dest);
-      }
+    auto vertexKey = adjList.find(v);
+
+    const map<VertexT, WeightT>& tempMap = vertexKey->second;
+
+    // For each loop that will save each key (vertex) of the adjList map.
+    for(const auto& elem : tempMap){
+      S.insert(elem.first);
     }
+
     return S;
   }
 
-  //
-  // getVertices
-  //
-  // Returns a vector containing all the vertices currently in
-  // the graph.
-  //
+
+  /// @brief Returns a vector containing all the vertices currently in
+  ///        the graph.
+  /// @return A vector with all the vertices in the graph
   vector<VertexT> getVertices() const {
-    return this->Vertices;  // returns a copy:
+    vector<VertexT> V;
+    
+    for(const auto& elem : adjList){
+      V.push_back(elem.first);
+    }
+
+    return V;  // Return a vector of all the vertices.
   }
+
+
 
   //
   // dump
@@ -202,34 +186,34 @@ class graph {
   //    G.dump(cout);  // dump to console
   //
   void dump(ostream& output) const {
-    output << "***************************************************" << endl;
-    output << "********************* GRAPH ***********************" << endl;
+  //   output << "***************************************************" << endl;
+  //   output << "********************* GRAPH ***********************" << endl;
 
-    output << "**Num vertices: " << this->NumVertices() << endl;
-    output << "**Num edges: " << this->NumEdges() << endl;
+  //   output << "**Num vertices: " << this->NumVertices() << endl;
+  //   output << "**Num edges: " << this->NumEdges() << endl;
 
-    output << endl;
-    output << "**Vertices:" << endl;
-    for (int i = 0; i < this->NumVertices(); ++i) {
-      output << " " << i << ". " << this->Vertices[i] << endl;
-    }
+  //   output << endl;
+  //   output << "**Vertices:" << endl;
+  //   for (int i = 0; i < this->NumVertices(); ++i) {
+  //     output << " " << i << ". " << this->Vertices[i] << endl;
+  //   }
 
-    output << endl;
-    output << "**Edges:" << endl;
-    for (int row = 0; row < this->NumVertices(); ++row) {
-      output << " row " << row << ": ";
+  //   output << endl;
+  //   output << "**Edges:" << endl;
+  //   for (int row = 0; row < this->NumVertices(); ++row) {
+  //     output << " row " << row << ": ";
 
-      for (int col = 0; col < this->NumVertices(); ++col) {
-        if (this->AdjMatrix[row][col].EdgeExists == false) {
-          output << "F ";
-        } else {
-          output << "(T,"
-            << this->AdjMatrix[row][col].Weight
-            << ") ";
-        }
-      }
-      output << endl;
-    }
-    output << "**************************************************" << endl;
+  //     for (int col = 0; col < this->NumVertices(); ++col) {
+  //       if (this->AdjMatrix[row][col].EdgeExists == false) {
+  //         output << "F ";
+  //       } else {
+  //         output << "(T,"
+  //           << this->AdjMatrix[row][col].Weight
+  //           << ") ";
+  //       }
+  //     }
+  //     output << endl;
+  //   }
+  //   output << "**************************************************" << endl;
   }
 };

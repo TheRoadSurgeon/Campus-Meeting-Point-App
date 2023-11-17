@@ -40,6 +40,24 @@
 using namespace std;
 using namespace tinyxml2;
 
+
+BuildingInfo searchBuilding(string query, const vector<BuildingInfo>& Buildings){
+  BuildingInfo bInfo;
+
+  for(size_t i; i < Buildings.size(); i++){
+    if(Buildings[i].Abbrev.find(query) != string::npos){
+      bInfo = Buildings[i];
+    }
+  }
+  for(size_t i; i < Buildings.size(); i++){
+    if(Buildings[i].Fullname.find(query) != string::npos){
+      bInfo = Buildings[i];
+    }
+  }
+  
+  return bInfo;
+}
+
 //
 // Implement your standard application here
 //
