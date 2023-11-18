@@ -127,6 +127,9 @@ void outputGraph(graph<string,int>& G)
   }
 
   cout << endl;
+
+  cout << "Vertices: " << G.NumVertices() << endl;
+  cout << "Edges: " << G.NumEdges() << endl;
 }
 
 

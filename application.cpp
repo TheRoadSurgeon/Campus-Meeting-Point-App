@@ -40,16 +40,21 @@
 using namespace std;
 using namespace tinyxml2;
 
-
+/// @brief This function is used to parse string and save a
+///        building object. Which will be used for finding distance 
+///        between two building objects
+/// @param query String based on user input
+/// @param Buildings 
+/// @return 
 BuildingInfo searchBuilding(string query, const vector<BuildingInfo>& Buildings){
   BuildingInfo bInfo;
 
-  for(size_t i; i < Buildings.size(); i++){
+  for(size_t i = 0; i < Buildings.size(); i++){
     if(Buildings[i].Abbrev.find(query) != string::npos){
       bInfo = Buildings[i];
     }
   }
-  for(size_t i; i < Buildings.size(); i++){
+  for(size_t i = 0; i < Buildings.size(); i++){
     if(Buildings[i].Fullname.find(query) != string::npos){
       bInfo = Buildings[i];
     }
@@ -57,6 +62,19 @@ BuildingInfo searchBuilding(string query, const vector<BuildingInfo>& Buildings)
   
   return bInfo;
 }
+
+/// @brief Build the graph structure that will hold all the information o
+/// @param Nodes 
+/// @param G 
+void buildGraph(const map<long long, Coordinates>&  Nodes, graph<long long, double>& G){
+  
+  for(const auto& elem : Nodes){
+    G.addVertex(elem.first);
+  }
+  
+}
+
+
 
 //
 // Implement your standard application here
@@ -93,6 +111,7 @@ void application(
     getline(cin, person1Building);
   }    
 }
+
 
 int main() {
   graph<long long, double> G;
@@ -159,10 +178,10 @@ int main() {
   //
   // TO DO: build the graph, output stats:
   //
+  buildGraph(Nodes, G);
 
-
-  // cout << "# of vertices: " << G.NumVertices() << endl;
-  // cout << "# of edges: " << G.NumEdges() << endl;
+  cout << "# of vertices: " << G.NumVertices() << endl;
+  cout << "# of edges: " << G.NumEdges() << endl;
   cout << endl;
 
   // Execute Application

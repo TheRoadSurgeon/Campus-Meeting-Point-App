@@ -44,7 +44,7 @@ class graph {
   /// @brief Shows the number of vertices in the graph
   /// @return the number of vertices
   int NumVertices() const {
-    return adjList.size();
+    return this->adjList.size();
   }
 
   //
