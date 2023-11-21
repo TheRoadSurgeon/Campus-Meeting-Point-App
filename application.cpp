@@ -64,13 +64,17 @@ BuildingInfo searchBuilding(string query, const vector<BuildingInfo>& Buildings)
 }
 
 /// @brief Build the graph structure that will hold all the information o
-/// @param Nodes 
-/// @param G 
-void buildGraph(const map<long long, Coordinates>&  Nodes, graph<long long, double>& G){
+/// @param Nodes the IDs of vertices and edges 
+/// @param G the graph that we are trying to build
+/// @param Footways gives the coordinates to calculate the weights of the graph
+void buildGraph(const map<long long, Coordinates>&  Nodes, graph<long long, double>& G, const vector<FootwayInfo>& Footways){
   
   for(const auto& elem : Nodes){
     G.addVertex(elem.first);
   }
+
+  
+
   
 }
 
@@ -178,7 +182,7 @@ int main() {
   //
   // TO DO: build the graph, output stats:
   //
-  buildGraph(Nodes, G);
+  buildGraph(Nodes, G, Footways);
 
   cout << "# of vertices: " << G.NumVertices() << endl;
   cout << "# of edges: " << G.NumEdges() << endl;
