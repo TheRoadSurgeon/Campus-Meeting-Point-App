@@ -30,6 +30,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
+#include <queue>
+#include <stack>
 
 #include "tinyxml2.h"
 #include "dist.h"
@@ -40,6 +42,14 @@
 using namespace std;
 using namespace tinyxml2;
 
+class prioritize  // you could also use a struct
+{
+public:
+  bool operator()(const pair<int,int>& p1, const pair<int,int>& p2) const
+  {
+    return p1.second > p2.second; 
+  }
+};
 
 const double INF = numeric_limits<double>::max();
 
@@ -128,6 +138,50 @@ Coordinates closesNode(const BuildingInfo& building, const vector<FootwayInfo>& 
   return closeNode;
 }
 
+
+ void DijkstraShortestPath(long long startV, const graph<long long, double>& G, map<long long, double>& distances, map<long long, long long>& pred){
+  
+  priority_queue<pair<long long, double>, vector<pair<long long, double>>, prioritize> unvisitedQueue;
+  set<long long> visitedSet;
+  
+  for(const auto& elem : G.getVertices()){
+    distances[elem] = INF;
+    unvisitedQueue.push({elem, INF}); 
+  }
+
+  // startV has a distance of 0 from itself
+  distances[startV] = 0;
+  
+
+  while (!unvisitedQueue.empty()){
+    // Visit vertex with minimum distance from startV
+    pair<long long, double> currentV = unvisitedQueue.top();
+    unvisitedQueue.pop();
+    if (distances[currentV.first] == INF)
+      break;
+    else if (visitedSet.count(currentV.first))
+      continue;
+    else{
+      visitedSet.insert(currentV.first);
+    }
+    
+    for(const auto& adj : G.getVertices()) {
+        double edgeWeight;
+        G.getWeight(currentV.first, adj, edgeWeight);
+        double alternativePathDistance = distances[currentV.first] + edgeWeight;
+          
+        // If shorter path from startV to adjV is found,
+        // update adjV's distance and predecessor
+        if (alternativePathDistance < distances[adj]) {
+          distances[adj] = alternativePathDistance;
+          pred[adj] = currentV.first;
+          unvisitedQueue.push({adj, alternativePathDistance});
+        }
+    }
+  }
+}
+
+
 //
 // Implement your standard application here
 //
@@ -135,6 +189,8 @@ void application(
   map<long long, Coordinates>& Nodes, vector<FootwayInfo>& Footways,
   vector<BuildingInfo>& Buildings, graph<long long, double>& G) {
   string person1Building, person2Building;
+  map<long long, double> distance;
+  stack<long long> stack;
   bool stopLoop = false;
 
   cout << endl;
@@ -178,6 +234,7 @@ void application(
     if(stopLoop){
       break;
     }
+    // DijkstraShortestPath(long long startV, const graph<long long, double>& G, map<long long, double>& distances, map<long long, long long>& pred);
     cout << endl << "Person 1's point:" << endl;
     cout << " " << building1.Fullname << endl;
     cout << " (" << building1.Coords.Lat << ", " << building1.Coords.Lon << ")" << endl;
@@ -204,7 +261,6 @@ void application(
     cout << "Enter person 1's building (partial name or abbreviation), or #> ";
     getline(cin, person1Building);
   }    
-  
 }
 
 

@@ -82,6 +82,15 @@
     "tuple": "cpp",
     "typeinfo": "cpp",
     "vector": "cpp",
-    "iostream": "cpp"
+    "iostream": "cpp",
+    "variant": "cpp",
+    "__hash_table": "cpp",
+    "array": "cpp",
+    "deque": "cpp",
+    "queue": "cpp",
+    "set": "cpp",
+    "stack": "cpp",
+    "string_view": "cpp",
+    "unordered_map": "cpp"
   }
 }
