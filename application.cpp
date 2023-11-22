@@ -40,18 +40,22 @@
 using namespace std;
 using namespace tinyxml2;
 
+
+const double INF = numeric_limits<double>::max();
+
 /// @brief This function is used to parse string and save a
 ///        building object. Which will be used for finding distance 
 ///        between two building objects
 /// @param query String based on user input
-/// @param Buildings 
-/// @return 
+/// @param Buildings vector for all the building information
+/// @return struct with the building a user is searching for
 BuildingInfo searchBuilding(string query, const vector<BuildingInfo>& Buildings){
   BuildingInfo bInfo;
 
   for(size_t i = 0; i < Buildings.size(); i++){
-    if(Buildings[i].Abbrev.find(query) != string::npos){
+    if(Buildings[i].Abbrev == query){
       bInfo = Buildings[i];
+      return bInfo;
     }
   }
   for(size_t i = 0; i < Buildings.size(); i++){
@@ -74,9 +78,34 @@ void buildGraph(const map<long long, Coordinates>&  Nodes, graph<long long, doub
   }
 
   
+  for(const auto& elem : Footways){
 
+    for(int i = 0; i < elem.Nodes.size() - 1; i++){
+      double distance = distBetween2Points(Nodes.at(elem.Nodes.at(i)).Lat, Nodes.at(elem.Nodes.at(i)).Lon, Nodes.at(elem.Nodes.at(i+1)).Lat, Nodes.at(elem.Nodes.at(i+1)).Lon);
+      G.addEdge(elem.Nodes.at(i), elem.Nodes.at(i+1), distance);
+      G.addEdge(elem.Nodes.at(i+1), elem.Nodes.at(i), distance);
+    }
+  }
   
 }
+
+void getMidPoint(const BuildingInfo& building1, const BuildingInfo& building2, const vector<BuildingInfo>& Buildings){
+  Coordinates midpoint = centerBetween2Points(building1.Coords.Lat, building1.Coords.Lon, building2.Coords.Lat, building2.Coords.Lat);
+  BuildingInfo midBuilding;
+  double min = INF;
+  for(int i = 0; i < Buildings.size(); i++){
+    double distance = distBetween2Points(Buildings.at(i).Coords.Lat, Buildings.at(i).Coords.Lon, midpoint.Lat, midpoint.Lon);
+    
+    if (distance < min){
+      min = distance;
+      midBuilding = Buildings.at(i);
+    }
+  }
+  cout << "Destination Building:" << endl;
+  cout << " " << midBuilding.Fullname << endl;
+  cout << " " << midBuilding.Coords.Lat << ", " << midBuilding.Coords.Lon << endl;
+
+} 
 
 
 
@@ -102,18 +131,40 @@ void application(
     // run Dijkstra's alg from each start, output distances and paths to destination:
     //
 
+    BuildingInfo building1 = searchBuilding(person1Building, Buildings);
+    BuildingInfo building2 = searchBuilding(person2Building, Buildings);
+    
+    while(building1.Abbrev == "" || building2.Abbrev == ""){
+      if(building1.Abbrev == ""){
+        cout << "Person 1's building not found" << endl;
+      }
+      else if(building2.Abbrev == ""){
+        cout << "Person 2's building not found" << endl;
+      }
+      
+      cout << endl;
+      cout << "Enter person 1's building (partial name or abbreviation), or #> ";
+      getline(cin, person1Building);
+      
+      cout << "Enter person 2's building (partial name or abbreviation)> ";
+      getline(cin, person2Building);
+    }
 
-    // cout << "Person 1's building not found" << endl;
-    // cout << "Person 2's building not found" << endl;
+    // cout << building1.Fullname << " " << building1.Abbrev << endl;
+    // cout << building2.Fullname << " " << building2.Abbrev << endl;
+    cout << endl << "Person 1's point: " << endl;
+    cout << " " << building1.Fullname << endl;
+    cout << " (" << building1.Coords.Lat << ", " << building1.Coords.Lon << ")" << endl;
+    cout << "Person 2's point: " << endl;
+    cout << " " << building2.Fullname << endl;
+    cout << " (" << building2.Coords.Lat << ", " << building2.Coords.Lon << ")" << endl;
+    getMidPoint(building1, building2, Buildings);
 
-
-    //
-    // another navigation?
-    //
     cout << endl;
     cout << "Enter person 1's building (partial name or abbreviation), or #> ";
     getline(cin, person1Building);
   }    
+  
 }
 
 
