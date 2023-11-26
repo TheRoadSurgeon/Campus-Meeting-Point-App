@@ -1,6 +1,6 @@
-// application.cpp <Starter Code>
-// <Your name>
-//
+// Project 5 application.cpp
+// Hristian Tountchev
+// 
 //
 // Adam T Koehler, PhD
 // University of Illinois Chicago
@@ -10,7 +10,9 @@
 // Joe Hummel, PhD
 // University of Illinois at Chicago
 //
-// 
+// Application: Runs the all the logic together and calculates the distance
+//              based on user input. It takes two inputs from a user that
+//              that are buildings in UIC.
 // References:
 // TinyXML: https://github.com/leethomason/tinyxml2
 // OpenStreetMap: https://www.openstreetmap.org
@@ -42,7 +44,8 @@
 using namespace std;
 using namespace tinyxml2;
 
-class prioritize  // you could also use a struct
+// Used for the unvisited nodes priority queue
+class prioritize
 {
 public:
   bool operator()(const pair<int,int>& p1, const pair<int,int>& p2) const
@@ -64,12 +67,17 @@ BuildingInfo searchBuilding(string query, const vector<BuildingInfo>& Buildings)
   bInfo.Abbrev = "";
   bInfo.Fullname = "";
 
+  // For loop that loops through all the abbreviations
+  // a building may have
   for(size_t i = 0; i < Buildings.size(); i++){
     if(Buildings[i].Abbrev == query){
       bInfo = Buildings[i];
       return bInfo;
     }
   }
+
+  // For loop that loops through all the names
+  // a building may have
   for(size_t i = 0; i < Buildings.size(); i++){
     if(Buildings[i].Fullname.find(query) != string::npos){
       bInfo = Buildings[i];
@@ -91,8 +99,10 @@ void buildGraph(const map<long long, Coordinates>&  Nodes, graph<long long, doub
   }
 
   
+  // For/each loop that goes through all the foot ways.
+  // Checks the distances between the two buildings and stores
+  // them as an edge in the data structure.
   for(const auto& elem : Footways){
-
     for(int i = 0; i < elem.Nodes.size() - 1; i++){ // maybe -1
       double distance = distBetween2Points(Nodes.at(elem.Nodes.at(i)).Lat, Nodes.at(elem.Nodes.at(i)).Lon, Nodes.at(elem.Nodes.at(i+1)).Lat, Nodes.at(elem.Nodes.at(i+1)).Lon);
       G.addEdge(elem.Nodes.at(i), elem.Nodes.at(i+1), distance);
@@ -102,29 +112,48 @@ void buildGraph(const map<long long, Coordinates>&  Nodes, graph<long long, doub
   
 }
 
+/// @brief finds the building that is in the middle of two points.
+/// @param building1 person 1's building/starting location.
+/// @param building2 person 2's building/starting location.
+/// @param Buildings all the buildings that are stored and looked at.
+/// @return struct type that stores the middle buildings information.
 BuildingInfo getMidPoint(const BuildingInfo& building1, const BuildingInfo& building2, const vector<BuildingInfo>& Buildings){
+  
+  // Stores the coordinates of the middle point of two buildings.
   Coordinates midpoint = centerBetween2Points(building1.Coords.Lat, building1.Coords.Lon, building2.Coords.Lat, building2.Coords.Lon);
   BuildingInfo midBuilding;
   double min = INF;
+
+  // For loop that tries to find the shortest distance between
+  // two buildings.
   for(int i = 0; i < Buildings.size(); i++){
     double distance = distBetween2Points(midpoint.Lat, midpoint.Lon, Buildings.at(i).Coords.Lat, Buildings.at(i).Coords.Lon);
     
+    // Simple min algorithm
     if (distance < min){
       min = distance;
       midBuilding = Buildings.at(i);
     }
   }
+
   cout << "Destination Building:" << endl;
   cout << " " << midBuilding.Fullname << endl;
   cout << " (" << midBuilding.Coords.Lat << ", " << midBuilding.Coords.Lon << ")"<< endl;
-  return midBuilding;
+  return midBuilding; // A BuildingInfo struct that holds the midpoint building information.
 } 
 
+/// @brief finds the closes destination from a building.
+/// @param building builiding we are trying to find the closes location for.
+/// @param Footways all the footways that hold all the information for the distances.
+/// @param Nodes holds all the information for the nodes.
+/// @return coordinates to the closest node of a building.
 Coordinates closesNode(const BuildingInfo& building, const vector<FootwayInfo>& Footways, const map<long long, Coordinates>&  Nodes){
   double min = INF;
   Coordinates closeNode;
   for(const auto& elem : Footways){
-
+    
+    // for loop that goes through all the nodes.
+    // calculates all the distances and finds the closes.
     for(int i = 0; i < elem.Nodes.size() - 1; i++){ // maybe its -1
       double distance = distBetween2Points(Nodes.at(elem.Nodes.at(i)).Lat, Nodes.at(elem.Nodes.at(i)).Lon, building.Coords.Lat, building.Coords.Lon);
       if (distance < min){
@@ -135,15 +164,22 @@ Coordinates closesNode(const BuildingInfo& building, const vector<FootwayInfo>& 
       }
     }
   }
-  return closeNode;
+  return closeNode; // Retruns the coordinate struct of the closest node.
 }
 
+/// @brief Calculates the shortest distance between two buildings.
+/// @param startV the starting location of a persons building.
+/// @param G graph structure that holds all the data for all vertices and edges.
+/// @param distances map that holds distances IDs and distance. Filled to be used later.
+/// @param pred map that holds the predecessor vertices. Filled to be used later.
+void DijkstraShortestPath(long long startV, const graph<long long, double>& G, map<long long, double>& distances, map<long long, long long>& pred){
 
- void DijkstraShortestPath(long long startV, const graph<long long, double>& G, map<long long, double>& distances, map<long long, long long>& pred){
-  
+  // Queue of all the vertices that will be visited through the algorithm.
   priority_queue<pair<long long, double>, vector<pair<long long, double>>, prioritize> unvisitedQueue;
   set<long long> visitedSet;
   
+  // for each loop that fills the distances map with
+  // each vertex of the graph and default values (infinite).
   for(const auto& elem : G.getVertices()){
     distances[elem] = INF;
     unvisitedQueue.push({elem, INF}); 
@@ -151,23 +187,35 @@ Coordinates closesNode(const BuildingInfo& building, const vector<FootwayInfo>& 
 
   // startV has a distance of 0 from itself
   distances[startV] = 0;
-  
 
+  // Main loop for the algo.
   while (!unvisitedQueue.empty()){
     // Visit vertex with minimum distance from startV
+    // Pop off the first vertex in the queue.
     pair<long long, double> currentV = unvisitedQueue.top();
     unvisitedQueue.pop();
-    if (distances[currentV.first] == INF)
+    
+    // Check if the value is infinity.
+    // If yes we are done.
+    if (distances[currentV.first] == INF){
       break;
-    else if (visitedSet.count(currentV.first))
+    }
+    // Check if the current vertex is in the set already.
+    // If it is skip it.
+    else if (visitedSet.count(currentV.first)){
       continue;
+    }
+    // If the current vertex is not in the set add it.  
     else{
       visitedSet.insert(currentV.first);
     }
     
+    // For/each loop checks all the vertices in the graph.
     for(const auto& adj : G.getVertices()) {
         double edgeWeight;
+        // Get the weight of the current vertex.
         G.getWeight(currentV.first, adj, edgeWeight);
+        // Used to check for a shorter path.
         double alternativePathDistance = distances[currentV.first] + edgeWeight;
           
         // If shorter path from startV to adjV is found,
@@ -178,7 +226,8 @@ Coordinates closesNode(const BuildingInfo& building, const vector<FootwayInfo>& 
           unvisitedQueue.push({adj, alternativePathDistance});
         }
     }
-  }
+  } // End of main loop.
+
 }
 
 
