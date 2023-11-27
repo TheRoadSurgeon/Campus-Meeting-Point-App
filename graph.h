@@ -143,7 +143,7 @@ class graph {
     set<VertexT>  S;
 
     // Make sure the vertex exists in the adjList map.
-    if(!_LookupVertex(v)){
+    if(_LookupVertex(v)){
       return S;
     }
 
