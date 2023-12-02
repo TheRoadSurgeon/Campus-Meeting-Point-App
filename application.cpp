@@ -154,7 +154,7 @@ Coordinates closesNode(const BuildingInfo& building, const vector<FootwayInfo>& 
     
     // for loop that goes through all the nodes.
     // calculates all the distances and finds the closes.
-    for(size_t i = 0; i < elem.Nodes.size() - 1; i++){ // maybe its -1
+    for(size_t i = 0; i < elem.Nodes.size(); i++){ // maybe its -1
       double distance = distBetween2Points(Nodes.at(elem.Nodes.at(i)).Lat, Nodes.at(elem.Nodes.at(i)).Lon, building.Coords.Lat, building.Coords.Lon);
       if (distance < min){
         min = distance;
@@ -182,6 +182,7 @@ void DijkstraShortestPath(long long startV, const graph<long long, double>& G, m
   // each vertex of the graph and default values (infinite).
   for(const auto& elem : G.getVertices()){
     distances[elem] = INF;
+    pred[elem] = -1;
     unvisitedQueue.push({elem, INF});
   }
 
@@ -234,35 +235,53 @@ void DijkstraShortestPath(long long startV, const graph<long long, double>& G, m
 
 }
 
+vector<long long> getPath(map<long long, long long> pred, const Coordinates& closestToMidBuilding){
+  vector<long long> v;
+  long long currV = closestToMidBuilding.ID;
+  stack<long long> temp;
+  while(pred[currV] == -1) {
+    temp.push(currV);
+    currV = pred[currV];
+  }
+  while(!temp.empty()) {
+    currV = temp.top();
+    temp.pop();
+    v.push_back(currV);
+  }
+return v;
+}
 
-//
-// Implement your standard application here
-//
+/// @brief The main logic behind the handling navigation around the graph.
+/// @param Nodes The nodes that are around the graph.
+/// @param Footways The nodes used to connect buildings.
+/// @param Buildings Building information that stores ID, Coord, etc...
+/// @param G The actual graph that has a custom built data structure.
 void application(
   map<long long, Coordinates>& Nodes, vector<FootwayInfo>& Footways,
   vector<BuildingInfo>& Buildings, graph<long long, double>& G) {
   string person1Building, person2Building;
   map<long long, double> distance1;
   map<long long, double> distance2;
-  double totalDist1 = 0.0;
-  double totalDist2 = 0.0;
   map<long long, long long> pred1;
   map<long long, long long> pred2;
-  stack<long long> stack;
+  stack<long long> path1;
+  stack<long long> path2;
   bool stopLoop = false;
 
   cout << endl;
   cout << "Enter person 1's building (partial name or abbreviation), or #> ";
   getline(cin, person1Building);
 
+  // Maine while loop for the app.
   while (person1Building != "#"){
     cout << "Enter person 2's building (partial name or abbreviation)> ";
     getline(cin, person2Building);
 
-
+    // Searches to see if the building is found in the data.
     BuildingInfo building1 = searchBuilding(person1Building, Buildings);
     BuildingInfo building2 = searchBuilding(person2Building, Buildings);
     
+    // While loop to make sure the building names are correct
     while(building1.Abbrev == "" || building2.Abbrev == ""){
       if(building1.Abbrev == ""){
         cout << "Person 1's building not found" << endl;
@@ -275,6 +294,7 @@ void application(
       cout << "Enter person 1's building (partial name or abbreviation), or #> ";
       getline(cin, person1Building);
       
+      // Stop the main loop.
       if(person1Building == "#"){
         stopLoop = true;
         break;
@@ -283,11 +303,12 @@ void application(
       cout << "Enter person 2's building (partial name or abbreviation)> ";
       getline(cin, person2Building);
       building1 = searchBuilding(person1Building, Buildings);
-      cout << building1.Fullname << endl;
+     // cout << building1.Fullname << endl;
       building2 = searchBuilding(person2Building, Buildings);
-      cout << building2.Fullname << endl;
+     // cout << building2.Fullname << endl;
     }
 
+    // Stops the main loop.
     if(stopLoop){
       break;
     }
@@ -302,7 +323,7 @@ void application(
     Coordinates closestToBuilding1 = closesNode(building1, Footways, Nodes);
     Coordinates closestToBuilding2 = closesNode(building2, Footways, Nodes);
     Coordinates closestToMidBuilding = closesNode(midBuilding, Footways, Nodes);
-
+    
     cout << endl;
     cout << "Nearest P1 node:" << endl;
     cout << " " << closestToBuilding1.ID << endl;
@@ -314,44 +335,75 @@ void application(
     cout << " " << closestToMidBuilding.ID << endl;
     cout << " (" << closestToMidBuilding.Lat << ", " << closestToMidBuilding.Lon << ")" << endl;
 
-    DijkstraShortestPath(building1.Coords.ID, G, distance1, pred1);
-    DijkstraShortestPath(building2.Coords.ID, G, distance2, pred2);
-   
-    
-    
-    // cout << distance1[building2.Coords.ID] << endl;
-    for(const auto& elem : distance1){
-      if(elem.second < INF){
-        cout << "V: " << elem.first << "W: " << elem.second << endl;
-        break;
-      } 
+    // Calculates the distance and the predecessors.
+    // Pass by reference to fill the maps.
+    DijkstraShortestPath(closestToBuilding1.ID, G, distance1, pred1);
+    DijkstraShortestPath(closestToBuilding2.ID, G, distance2, pred2);
+
+    // Calculate the miles between the start and end destinations.
+    double p1Distance = distance1[closestToMidBuilding.ID];
+    double p2Distance = distance2[closestToMidBuilding.ID];
+    // Checks if the start and end points have a pathing to them.
+    if(distance1[closestToBuilding2.ID] >= INF){
+      cout << endl;
+      cout << "Sorry, destination unreachable." << endl;
     }
-    // auto it = distance1.begin();
-    // while(it != distance1.end()){
-    //   long long vertex1 = it->first;
-    //   double weight1 = it->second;
-    //   double weight;
-    //   it++;
+    // Checks if the start and end points have pathing to the node closes to them.
+    // Side note: closes node to them is the middle buildings closes note.
+    else if(distance1[closestToMidBuilding.ID] >= INF || distance2[closestToMidBuilding.ID] >= INF){
+      cout << "Sorry, destination unreachable." << endl;
+    }
+    else{
+      cout << endl;
+      cout << "Person 1's distance to dest: " << p1Distance << " miles"<< endl;
+      cout << "Path: ";
+      
+      path1.push(closestToMidBuilding.ID);
+      long long tempIDs1 = closestToMidBuilding.ID;
+      // Builds a stack for the paths to be printed later.
+      while(pred1[tempIDs1] != -1){
+        path1.push(pred1[tempIDs1]);
+        tempIDs1 = pred1[tempIDs1];
+      }
+      // Prints and pops of the path from the stack in the right order.
+      while(!path1.empty()){
+        long long toPrint = path1.top();
+        path1.pop();
+        if(path1.size()>=1){
+          cout << toPrint << "->";
+        }
+        else{
+          cout << toPrint;
+        }
+      }
 
-    //   if(it != distance1.end()){
-    //     double weight2 = it->second;
-    //     it++;
-    //     G.getWeight(weight1, weight2, weight);
-    //   }
+      cout << endl << endl; 
       
-    //   totalDist1 += weight;
       
-    // }
-      
-    // cout << totalDist1 << endl;
-    // if(distance1[building2.Coords.ID] >= INF){
-    //   cout << "Sorry, destination unreachable." << endl;
-    // }
-    // else{
-    //   cout << "Person 1's distance to dest: " << distance1[building2.Coords.ID] << endl;
-    // }
-   
+      cout << "Person 2's distance to dest: " << p2Distance << " miles" << endl;
+      cout << "Path: ";
+      path2.push(closestToMidBuilding.ID);
+      long long tempIDs2 = closestToMidBuilding.ID;
+      // Builds a stack for the paths to be printed later.
+      while(pred2[tempIDs2] != -1){
+        path2.push(pred2[tempIDs2]);
+        tempIDs2 = pred2[tempIDs2];
+      }
 
+      // Prints and pops of the path from the stack in the right order.
+      while(!path2.empty()){
+        long long toPrint1 = path2.top();
+        path2.pop();
+        if(path2.size()>=1){
+          cout << toPrint1 << "->";
+        }
+        else{
+          cout << toPrint1;
+        }
+      }
+      cout << endl;
+    }
+    
     cout << endl;
     cout << "Enter person 1's building (partial name or abbreviation), or #> ";
     getline(cin, person1Building);
@@ -421,9 +473,6 @@ int main() {
   cout << "# of buildings: " << Buildings.size() << endl;
 
 
-  //
-  // TO DO: build the graph, output stats:
-  //
   buildGraph(Nodes, G, Footways);
 
   cout << "# of vertices: " << G.NumVertices() << endl;
@@ -436,6 +485,7 @@ int main() {
   //
   // done:
   //
+  cout << endl;
   cout << "** Done **" << endl;
   return 0;
 }
